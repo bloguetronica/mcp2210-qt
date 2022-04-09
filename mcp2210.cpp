@@ -455,7 +455,7 @@ int MCP2210::open(quint16 vid, quint16 pid, const QString &serial)
     } else if (libusb_init(&context_) != 0) {  // Initialize libusb. In case of failure
         retval = ERROR_INIT;
     } else {  // If libusb is initialized
-        if (serial.isNull()) {  // Note that serial, by omission, is an empty string
+        if (serial.isNull()) {  // Note that serial, by omission, is a null QString
             handle_ = libusb_open_device_with_vid_pid(context_, vid, pid);  // If no serial number is specified, this will open the first device found with matching VID and PID
         } else {
             handle_ = libusb_open_device_with_vid_pid_serial(context_, vid, pid, reinterpret_cast<unsigned char *>(serial.toLatin1().data()));
