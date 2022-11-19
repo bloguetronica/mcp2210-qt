@@ -499,7 +499,7 @@ quint8 MCP2210::readEEPROMByte(quint8 address, int &errcnt, QString &errstr)
 }
 
 // Reads the EEPROM within the specified range, returning a vector
-// In an error occurs, the size of the vector will be smaller than expected
+// If an error occurs, the size of the vector will be smaller than expected
 QVector<quint8> MCP2210::readEEPROMRange(quint8 begin, quint8 end, int &errcnt, QString &errstr)
 {
     QVector<quint8> values;
