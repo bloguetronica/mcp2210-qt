@@ -1,4 +1,4 @@
-/* MCP2210 class for Qt - Version 1.0.0
+/* MCP2210 class for Qt - Version 1.1.0
    Copyright (c) 2022 Samuel Lourenço
 
    This library is free software: you can redistribute it and/or modify it
@@ -435,7 +435,7 @@ QVector<quint8> MCP2210::hidTransfer(const QVector<quint8> &data, int &errcnt, Q
     unsigned char responseBuffer[COMMAND_SIZE];
     int bytesRead = 0;  // Important!
     interruptTransfer(EPIN, responseBuffer, static_cast<int>(COMMAND_SIZE), &bytesRead, errcnt, errstr);
-    QVector<quint8> retdata(COMMAND_SIZE);
+    QVector<quint8> retdata(static_cast<int>(COMMAND_SIZE));
     for (int i = 0; i < bytesRead; ++i) {
         retdata[i] = responseBuffer[i];
     }
