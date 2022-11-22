@@ -48,6 +48,7 @@ public:
     static const int ERROR_BUSY = 3;           // Returned by open() if the device is already in use
     static const size_t COMMAND_SIZE = 64;     // HID command size
     static const size_t SPIDATA_MAXSIZE = 60;  // Maximum size of the data vector for a single SPI transfer (only applicable to basic SPI transfers)
+    static const size_t PASSWORD_MAXLEN = 8;   // Maximum length for the password
 
     // Descriptor specific definitions
     static const size_t DESC_MAXLEN = 28;  // Maximum length for any descriptor
@@ -97,6 +98,11 @@ public:
     static const quint8 TRANSFER_FINISHED = 0x10;      // SPI transfer finished (no more data to send)
     static const quint8 TRANSFER_STARTED = 0x20;       // SPI transfer started (no data to receive)
     static const quint8 TRANSFER_NOT_FINISHED = 0x30;  // SPI transfer not finished (received data available)
+
+    // Access control modes, returned by getAccessControlMode()
+    static const quint8 ACNONE = 0x00;      // Chip settings not protected (no access control)
+    static const quint8 ACPASSWORD = 0x40;  // Chip settings protected by password access
+    static const quint8 ACLOCKED = 0x80;    // Chip settings permanently locked
 
     // The following values are applicable to ChipSettings/configureChipSettings()/getChipSettings()/getNVChipSettings()/writeNVChipSettings()
     static const quint8 PCGPIO = 0x00;   // Pin configured as GPIO
@@ -264,6 +270,7 @@ public:
     void close();
     quint8 configureChipSettings(const ChipSettings &settings, int &errcnt, QString &errstr);
     quint8 configureSPISettings(const SPISettings &settings, int &errcnt, QString &errstr);
+    quint8 getAccessControlMode(int &errcnt, QString &errstr);
     ChipSettings getChipSettings(int &errcnt, QString &errstr);
     ChipStatus getChipStatus(int &errcnt, QString &errstr);
     quint16 getEventCount(int &errcnt, QString &errstr);
@@ -291,6 +298,7 @@ public:
     quint8 writeEEPROMByte(quint8 address, quint8 value, int &errcnt, QString &errstr);
     quint8 writeEEPROMRange(quint8 begin, quint8 end, const QVector<quint8> &values, int &errcnt, QString &errstr);
     quint8 writeManufacturerDesc(const QString &manufacturer, int &errcnt, QString &errstr);
+    quint8 writeNVChipSettings(const ChipSettings &settings, quint8 accessControlMode, const QString &password, int &errcnt, QString &errstr);
     quint8 writeNVChipSettings(const ChipSettings &settings, int &errcnt, QString &errstr);
     quint8 writeNVSPISettings(const SPISettings &settings, int &errcnt, QString &errstr);
     quint8 writeProductDesc(const QString &product, int &errcnt, QString &errstr);
