@@ -33,7 +33,7 @@ const unsigned int TR_TIMEOUT = 500;  // Transfer timeout in milliseconds
 // Private generic function that is used to get any descriptor
 QString MCP2210::getDescGeneric(quint8 subcomid, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_NVRAM_SETTINGS, subcomid  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -163,7 +163,7 @@ bool MCP2210::isOpen() const
 // Cancels the ongoing SPI transfer
 quint8 MCP2210::cancelSPITransfer(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         CANCEL_SPI_TRANSFER  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -187,7 +187,7 @@ void MCP2210::close()
 // Configures volatile chip settings
 quint8 MCP2210::configureChipSettings(const ChipSettings &settings, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_CHIP_SETTINGS, 0x00, 0x00, 0x00,                                                             // Header
         settings.gp0,                                                                                    // GP0 pin configuration
         settings.gp1,                                                                                    // GP1 pin configuration
@@ -209,7 +209,7 @@ quint8 MCP2210::configureChipSettings(const ChipSettings &settings, int &errcnt,
 // Configures volatile SPI transfer settings
 quint8 MCP2210::configureSPISettings(const SPISettings &settings, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_SPI_SETTINGS, 0x00, 0x00, 0x00,                                                        // Header
         static_cast<quint8>(settings.bitrate), static_cast<quint8>(settings.bitrate >> 8),         // Bit rate
         static_cast<quint8>(settings.bitrate >> 16), static_cast<quint8>(settings.bitrate >> 24),
@@ -228,7 +228,7 @@ quint8 MCP2210::configureSPISettings(const SPISettings &settings, int &errcnt, Q
 // Retrieves the access control mode from the MCP2210 NVRAM
 quint8 MCP2210::getAccessControlMode(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_NVRAM_SETTINGS, NV_CHIP_SETTINGS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -238,7 +238,7 @@ quint8 MCP2210::getAccessControlMode(int &errcnt, QString &errstr)
 // Returns applied chip settings
 MCP2210::ChipSettings MCP2210::getChipSettings(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_CHIP_SETTINGS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -263,7 +263,7 @@ MCP2210::ChipSettings MCP2210::getChipSettings(int &errcnt, QString &errstr)
 // Returns the current status
 MCP2210::ChipStatus MCP2210::getChipStatus(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_CHIP_STATUS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -278,7 +278,7 @@ MCP2210::ChipStatus MCP2210::getChipStatus(int &errcnt, QString &errstr)
 // Gets the number of events from the interrupt pin
 quint16 MCP2210::getEventCount(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_EVENT_COUNT,  // Header
         0x01              // Do not reset the event counter
     };
@@ -317,7 +317,7 @@ bool MCP2210::getGPIODirection(int gpio, int &errcnt, QString &errstr)
 // Returns the directions of all GPIO pins on the MCP2210
 quint8 MCP2210::getGPIODirections(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_GPIO_DIRECTIONS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -327,7 +327,7 @@ quint8 MCP2210::getGPIODirections(int &errcnt, QString &errstr)
 // Returns the values of all GPIO pins on the MCP2210
 quint16 MCP2210::getGPIOs(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_GPIO_VALUES  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -343,7 +343,7 @@ QString MCP2210::getManufacturerDesc(int &errcnt, QString &errstr)
 // Retrieves the power-up (non-volatile) chip settings from the MCP2210 NVRAM
 MCP2210::ChipSettings MCP2210::getNVChipSettings(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_NVRAM_SETTINGS, NV_CHIP_SETTINGS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -368,7 +368,7 @@ MCP2210::ChipSettings MCP2210::getNVChipSettings(int &errcnt, QString &errstr)
 // Retrieves the power-up (non-volatile) SPI transfer settings from the MCP2210 NVRAM
 MCP2210::SPISettings MCP2210::getNVSPISettings(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_NVRAM_SETTINGS, NV_SPI_SETTINGS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -393,7 +393,7 @@ QString MCP2210::getProductDesc(int &errcnt, QString &errstr)
 // Returns applied SPI transfer settings
 MCP2210::SPISettings MCP2210::getSPISettings(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_SPI_SETTINGS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -412,7 +412,7 @@ MCP2210::SPISettings MCP2210::getSPISettings(int &errcnt, QString &errstr)
 // Gets the USB parameters, namely VID, PID and power settings
 MCP2210::USBParameters MCP2210::getUSBParameters(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_NVRAM_SETTINGS, USB_PARAMETERS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -500,7 +500,7 @@ int MCP2210::open(quint16 vid, quint16 pid, const QString &serial)
 // Reads a byte from the given EEPROM address
 quint8 MCP2210::readEEPROMByte(quint8 address, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         READ_EEPROM,  // Header
         address       // Address to be read
     };
@@ -532,7 +532,7 @@ QVector<quint8> MCP2210::readEEPROMRange(quint8 begin, quint8 end, int &errcnt, 
 // Resets the interrupt event counter
 quint8 MCP2210::resetEventCounter(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_EVENT_COUNT,  // Header
         0x00              // Reset the event counter
     };
@@ -595,7 +595,7 @@ quint8 MCP2210::setGPIODirection(int gpio, bool direction, int &errcnt, QString 
 // Sets the directions of all GPIO pins on the MCP2210
 quint8 MCP2210::setGPIODirections(quint8 directions, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_GPIO_DIRECTIONS, 0x00, 0x00, 0x00,  // Header
         directions, 0x01                        // GPIO directions (GPIO7 to GPIO0)
     };
@@ -606,7 +606,7 @@ quint8 MCP2210::setGPIODirections(quint8 directions, int &errcnt, QString &errst
 // Sets the values of all GPIO pins on the MCP2210
 quint8 MCP2210::setGPIOs(quint16 values, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_GPIO_VALUES, 0x00, 0x00, 0x00,  // Header
         static_cast<quint8>(values)         // GPIO values (GPIO7 to GPPIO0 - GPIO8 is an input only pin)
     };
@@ -674,7 +674,7 @@ quint8 MCP2210::toggleGPIO(int gpio, int &errcnt, QString &errstr)
 // Writes a byte to a given EEPROM address
 quint8 MCP2210::writeEEPROMByte(quint8 address, quint8 value, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         WRITE_EEPROM,  // Header
         address,       // Address to be written
         value          // Value
@@ -729,7 +729,7 @@ quint8 MCP2210::writeManufacturerDesc(const QString &manufacturer, int &errcnt, 
 // Note that using an empty string for the password will have the effect of leaving it unchanged
 quint8 MCP2210::writeNVChipSettings(const ChipSettings &settings, quint8 accessControlMode, const QString &password, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_NVRAM_SETTINGS, NV_CHIP_SETTINGS, 0x00, 0x00,                                                // Header
         settings.gp0,                                                                                    // GP0 pin configuration
         settings.gp1,                                                                                    // GP1 pin configuration
@@ -758,7 +758,7 @@ quint8 MCP2210::writeNVChipSettings(const ChipSettings &settings, int &errcnt, Q
 // Writes the given SPI transfer settings to the MCP2210 OTP NVRAM
 quint8 MCP2210::writeNVSPISettings(const SPISettings &settings, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_NVRAM_SETTINGS, NV_SPI_SETTINGS, 0x00, 0x00,                                           // Header
         static_cast<quint8>(settings.bitrate), static_cast<quint8>(settings.bitrate >> 8),         // Bit rate
         static_cast<quint8>(settings.bitrate >> 16), static_cast<quint8>(settings.bitrate >> 24),
@@ -791,7 +791,7 @@ quint8 MCP2210::writeProductDesc(const QString &product, int &errcnt, QString &e
 // Writes the USB parameters to the MCP2210 OTP NVRAM
 quint8 MCP2210::writeUSBParameters(const USBParameters &parameters, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_NVRAM_SETTINGS, USB_PARAMETERS, 0x00, 0x00,                                                      // Header
         static_cast<quint8>(parameters.vid), static_cast<quint8>(parameters.vid >> 8),                       // Vendor ID
         static_cast<quint8>(parameters.pid), static_cast<quint8>(parameters.pid >> 8),                       // Product ID
