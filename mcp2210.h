@@ -75,6 +75,7 @@ public:
     static const quint8 WRITE_EEPROM = 0x51;         // Write EEPROM
     static const quint8 SET_NVRAM_SETTINGS = 0x60;   // Set NVRAM settings
     static const quint8 GET_NVRAM_SETTINGS = 0x61;   // Get NVRAM settings
+    static const quint8 SEND_PASSWORD = 0x70;        // Send password
 
     // NVRAM settings sub-command IDs
     static const quint8 NV_SPI_SETTINGS = 0x10;    // Power-up (non-volatile) SPI transfer settings
@@ -295,6 +296,7 @@ public:
     quint8 setGPIOs(quint16 values, int &errcnt, QString &errstr);
     QVector<quint8> spiTransfer(const QVector<quint8> &data, quint8 &status, int &errcnt, QString &errstr);
     quint8 toggleGPIO(int gpio, int &errcnt, QString &errstr);
+    quint8 usePassword(const QString &password, int &errcnt, QString &errstr);
     quint8 writeEEPROMByte(quint8 address, quint8 value, int &errcnt, QString &errstr);
     quint8 writeEEPROMRange(quint8 begin, quint8 end, const QVector<quint8> &values, int &errcnt, QString &errstr);
     quint8 writeManufacturerDesc(const QString &manufacturer, int &errcnt, QString &errstr);

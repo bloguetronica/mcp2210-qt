@@ -19,6 +19,7 @@
 
 
 // Includes
+#include <QByteArray>
 #include <QObject>
 #include "mcp2210.h"
 extern "C" {
@@ -671,6 +672,33 @@ quint8 MCP2210::toggleGPIO(int gpio, int &errcnt, QString &errstr)
     return retval;
 }
 
+// Sends password over to the MCP2210
+// This function should be called before modifying a setting in the NVRAM, if a password is set
+quint8 MCP2210::usePassword(const QString &password, int &errcnt, QString &errstr)
+{
+    quint8 retval;
+    QByteArray passwordLatin1 = password.toLatin1();
+    int passwordLength = passwordLatin1.size();
+    if (passwordLength > static_cast<int>(PASSWORD_MAXLEN)) {
+        ++errcnt;
+        errstr += "In usePassword(): password cannot be longer than 8 characters.\n";  // Program logic error
+        retval = OTHER_ERROR;
+    } else if (password != passwordLatin1) {
+        ++errcnt;
+        errstr += "In usePassword(): password cannot have non-latin characters.\n";  // Program logic error
+        retval = OTHER_ERROR;
+    } else {
+        QVector<quint8> command(passwordLength + 4);
+        command[0] = SEND_PASSWORD;  // Header
+        for (int i = 0; i < passwordLength; ++i) {
+            command[i + 4] = static_cast<quint8>(passwordLatin1[i]);
+        }
+        QVector<quint8> response = hidTransfer(command, errcnt, errstr);
+        retval = response[1];
+    }
+    return retval;
+}
+
 // Writes a byte to a given EEPROM address
 quint8 MCP2210::writeEEPROMByte(quint8 address, quint8 value, int &errcnt, QString &errstr)
 {
@@ -729,23 +757,46 @@ quint8 MCP2210::writeManufacturerDesc(const QString &manufacturer, int &errcnt, 
 // Note that using an empty string for the password will have the effect of leaving it unchanged
 quint8 MCP2210::writeNVChipSettings(const ChipSettings &settings, quint8 accessControlMode, const QString &password, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command{
-        SET_NVRAM_SETTINGS, NV_CHIP_SETTINGS, 0x00, 0x00,                                                // Header
-        settings.gp0,                                                                                    // GP0 pin configuration
-        settings.gp1,                                                                                    // GP1 pin configuration
-        settings.gp2,                                                                                    // GP2 pin configuration
-        settings.gp3,                                                                                    // GP3 pin configuration
-        settings.gp4,                                                                                    // GP4 pin configuration
-        settings.gp5,                                                                                    // GP5 pin configuration
-        settings.gp6,                                                                                    // GP6 pin configuration
-        settings.gp7,                                                                                    // GP7 pin configuration
-        settings.gp8,                                                                                    // GP8 pin configuration
-        settings.gpout, 0x00,                                                                            // Default GPIO outputs (GPIO7 to GPIO0)
-        settings.gpdir, 0x01,                                                                            // Default GPIO directions (GPIO7 to GPIO0)
-        static_cast<quint8>(settings.rmwakeup << 4 | (0x07 & settings.intmode) << 1 | settings.nrelspi)  // Other chip settings
-    };
-    QVector<quint8> response = hidTransfer(command, errcnt, errstr);
-    return response[1];
+    quint8 retval;
+    QByteArray passwordLatin1 = password.toLatin1();
+    int passwordLength = passwordLatin1.size();
+    if (accessControlMode != ACNONE && accessControlMode != ACPASSWORD && accessControlMode != ACLOCKED) {
+        ++errcnt;
+        errstr += "In writeNVChipSettings(): the specified access control mode is not supported.\n";  // Program logic error
+        retval = OTHER_ERROR;
+    } else if (passwordLength > static_cast<int>(PASSWORD_MAXLEN)) {
+        ++errcnt;
+        errstr += "In writeNVChipSettings(): password cannot be longer than 8 characters.\n";  // Program logic error
+        retval = OTHER_ERROR;
+    } else if (password != passwordLatin1) {
+        ++errcnt;
+        errstr += "In writeNVChipSettings(): password cannot have non-latin characters.\n";  // Program logic error
+        retval = OTHER_ERROR;
+    } else {
+        QVector<quint8> command(passwordLength + 19);
+        command[0] = SET_NVRAM_SETTINGS;                                                                                // Header
+        command[1] = NV_CHIP_SETTINGS;
+        command[4] = settings.gp0;                                                                                      // GP0 pin configuration
+        command[5] = settings.gp1;                                                                                      // GP1 pin configuration
+        command[6] = settings.gp2;                                                                                      // GP2 pin configuration
+        command[7] = settings.gp3;                                                                                      // GP3 pin configuration
+        command[8] = settings.gp4;                                                                                      // GP4 pin configuration
+        command[9] = settings.gp5;                                                                                      // GP5 pin configuration
+        command[10] = settings.gp6;                                                                                     // GP6 pin configuration
+        command[11] = settings.gp7;                                                                                     // GP7 pin configuration
+        command[12] = settings.gp8,                                                                                     // GP8 pin configuration
+        command[13] = settings.gpout;                                                                                   // Default GPIO outputs (GPIO7 to GPIO0)
+        command[15] = settings.gpdir;                                                                                   // Default GPIO directions (GPIO7 to GPIO0)
+        command[16] = 0x01;
+        command[17] = static_cast<quint8>(settings.rmwakeup << 4 | (0x07 & settings.intmode) << 1 | settings.nrelspi);  // Other chip settings
+        command[18] = accessControlMode;                                                                                // Access control mode
+        for (int i = 0; i < passwordLength; ++i) {
+            command[i + 19] = static_cast<quint8>(passwordLatin1[i]);
+        }
+        QVector<quint8> response = hidTransfer(command, errcnt, errstr);
+        retval = response[1];
+    }
+    return retval;
 }
 
 // Writes the given chip transfer settings to the MCP2210 OTP NVRAM (this overloaded function is functionally equivalent to the implementation of writeNVChipSettings() that is found in version 1.0.0)
