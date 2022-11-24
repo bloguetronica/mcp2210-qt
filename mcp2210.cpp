@@ -1,4 +1,4 @@
-/* MCP2210 class for Qt - Version 1.0.0
+/* MCP2210 class for Qt - Version 1.1.0
    Copyright (c) 2022 Samuel Lourenço
 
    This library is free software: you can redistribute it and/or modify it
@@ -19,6 +19,7 @@
 
 
 // Includes
+#include <QByteArray>
 #include <QObject>
 #include "mcp2210.h"
 extern "C" {
@@ -33,7 +34,7 @@ const unsigned int TR_TIMEOUT = 500;  // Transfer timeout in milliseconds
 // Private generic function that is used to get any descriptor
 QString MCP2210::getDescGeneric(quint8 subcomid, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_NVRAM_SETTINGS, subcomid  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -163,7 +164,7 @@ bool MCP2210::isOpen() const
 // Cancels the ongoing SPI transfer
 quint8 MCP2210::cancelSPITransfer(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         CANCEL_SPI_TRANSFER  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -187,7 +188,7 @@ void MCP2210::close()
 // Configures volatile chip settings
 quint8 MCP2210::configureChipSettings(const ChipSettings &settings, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_CHIP_SETTINGS, 0x00, 0x00, 0x00,                                                             // Header
         settings.gp0,                                                                                    // GP0 pin configuration
         settings.gp1,                                                                                    // GP1 pin configuration
@@ -209,7 +210,7 @@ quint8 MCP2210::configureChipSettings(const ChipSettings &settings, int &errcnt,
 // Configures volatile SPI transfer settings
 quint8 MCP2210::configureSPISettings(const SPISettings &settings, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_SPI_SETTINGS, 0x00, 0x00, 0x00,                                                        // Header
         static_cast<quint8>(settings.bitrate), static_cast<quint8>(settings.bitrate >> 8),         // Bit rate
         static_cast<quint8>(settings.bitrate >> 16), static_cast<quint8>(settings.bitrate >> 24),
@@ -225,10 +226,20 @@ quint8 MCP2210::configureSPISettings(const SPISettings &settings, int &errcnt, Q
     return response[1];
 }
 
+// Retrieves the access control mode from the MCP2210 NVRAM
+quint8 MCP2210::getAccessControlMode(int &errcnt, QString &errstr)
+{
+    QVector<quint8> command{
+        GET_NVRAM_SETTINGS, NV_CHIP_SETTINGS  // Header
+    };
+    QVector<quint8> response = hidTransfer(command, errcnt, errstr);
+    return response[18];  // Access control mode corresponds to byte 18
+}
+
 // Returns applied chip settings
 MCP2210::ChipSettings MCP2210::getChipSettings(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_CHIP_SETTINGS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -253,7 +264,7 @@ MCP2210::ChipSettings MCP2210::getChipSettings(int &errcnt, QString &errstr)
 // Returns the current status
 MCP2210::ChipStatus MCP2210::getChipStatus(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_CHIP_STATUS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -268,7 +279,7 @@ MCP2210::ChipStatus MCP2210::getChipStatus(int &errcnt, QString &errstr)
 // Gets the number of events from the interrupt pin
 quint16 MCP2210::getEventCount(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_EVENT_COUNT,  // Header
         0x01              // Do not reset the event counter
     };
@@ -280,7 +291,7 @@ quint16 MCP2210::getEventCount(int &errcnt, QString &errstr)
 bool MCP2210::getGPIO(int gpio, int &errcnt, QString &errstr)
 {
     bool value;
-    if (gpio < 0 || gpio > 8) {
+    if (gpio < GPIO0 || gpio > GPIO8) {
         ++errcnt;
         errstr += QObject::tr("In getGPIO(): GPIO pin number must be between 0 and 8.\n");  // Program logic error
         value = false;
@@ -294,7 +305,7 @@ bool MCP2210::getGPIO(int gpio, int &errcnt, QString &errstr)
 bool MCP2210::getGPIODirection(int gpio, int &errcnt, QString &errstr)
 {
     bool direction;
-    if (gpio < 0 || gpio > 7) {
+    if (gpio < GPIO0 || gpio > GPIO7) {
         ++errcnt;
         errstr += QObject::tr("In getGPIODirection(): GPIO pin number must be between 0 and 7.\n");  // Program logic error
         direction = false;
@@ -307,7 +318,7 @@ bool MCP2210::getGPIODirection(int gpio, int &errcnt, QString &errstr)
 // Returns the directions of all GPIO pins on the MCP2210
 quint8 MCP2210::getGPIODirections(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_GPIO_DIRECTIONS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -317,7 +328,7 @@ quint8 MCP2210::getGPIODirections(int &errcnt, QString &errstr)
 // Returns the values of all GPIO pins on the MCP2210
 quint16 MCP2210::getGPIOs(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_GPIO_VALUES  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -333,7 +344,7 @@ QString MCP2210::getManufacturerDesc(int &errcnt, QString &errstr)
 // Retrieves the power-up (non-volatile) chip settings from the MCP2210 NVRAM
 MCP2210::ChipSettings MCP2210::getNVChipSettings(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_NVRAM_SETTINGS, NV_CHIP_SETTINGS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -358,7 +369,7 @@ MCP2210::ChipSettings MCP2210::getNVChipSettings(int &errcnt, QString &errstr)
 // Retrieves the power-up (non-volatile) SPI transfer settings from the MCP2210 NVRAM
 MCP2210::SPISettings MCP2210::getNVSPISettings(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_NVRAM_SETTINGS, NV_SPI_SETTINGS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -383,7 +394,7 @@ QString MCP2210::getProductDesc(int &errcnt, QString &errstr)
 // Returns applied SPI transfer settings
 MCP2210::SPISettings MCP2210::getSPISettings(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_SPI_SETTINGS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -402,7 +413,7 @@ MCP2210::SPISettings MCP2210::getSPISettings(int &errcnt, QString &errstr)
 // Gets the USB parameters, namely VID, PID and power settings
 MCP2210::USBParameters MCP2210::getUSBParameters(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_NVRAM_SETTINGS, USB_PARAMETERS  // Header
     };
     QVector<quint8> response = hidTransfer(command, errcnt, errstr);
@@ -435,7 +446,7 @@ QVector<quint8> MCP2210::hidTransfer(const QVector<quint8> &data, int &errcnt, Q
     unsigned char responseBuffer[COMMAND_SIZE];
     int bytesRead = 0;  // Important!
     interruptTransfer(EPIN, responseBuffer, static_cast<int>(COMMAND_SIZE), &bytesRead, errcnt, errstr);
-    QVector<quint8> retdata(COMMAND_SIZE);
+    QVector<quint8> retdata(static_cast<int>(COMMAND_SIZE));
     for (int i = 0; i < bytesRead; ++i) {
         retdata[i] = responseBuffer[i];
     }
@@ -490,7 +501,7 @@ int MCP2210::open(quint16 vid, quint16 pid, const QString &serial)
 // Reads a byte from the given EEPROM address
 quint8 MCP2210::readEEPROMByte(quint8 address, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         READ_EEPROM,  // Header
         address       // Address to be read
     };
@@ -499,7 +510,7 @@ quint8 MCP2210::readEEPROMByte(quint8 address, int &errcnt, QString &errstr)
 }
 
 // Reads the EEPROM within the specified range, returning a vector
-// In an error occurs, the size of the vector will be smaller than expected
+// If an error occurs, the size of the vector will be smaller than expected
 QVector<quint8> MCP2210::readEEPROMRange(quint8 begin, quint8 end, int &errcnt, QString &errstr)
 {
     QVector<quint8> values;
@@ -522,7 +533,7 @@ QVector<quint8> MCP2210::readEEPROMRange(quint8 begin, quint8 end, int &errcnt, 
 // Resets the interrupt event counter
 quint8 MCP2210::resetEventCounter(int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         GET_EVENT_COUNT,  // Header
         0x00              // Reset the event counter
     };
@@ -534,7 +545,7 @@ quint8 MCP2210::resetEventCounter(int &errcnt, QString &errstr)
 quint8 MCP2210::setGPIO(int gpio, bool value, int &errcnt, QString &errstr)
 {
     quint8 retval;
-    if (gpio < 0 || gpio > 7) {
+    if (gpio < GPIO0 || gpio > GPIO7) {
         ++errcnt;
         errstr += QObject::tr("In setGPIO(): GPIO pin number must be between 0 and 7.\n");  // Program logic error
         retval = OTHER_ERROR;
@@ -560,7 +571,7 @@ quint8 MCP2210::setGPIO(int gpio, bool value, int &errcnt, QString &errstr)
 quint8 MCP2210::setGPIODirection(int gpio, bool direction, int &errcnt, QString &errstr)
 {
     quint8 retval;
-    if (gpio < 0 || gpio > 7) {
+    if (gpio < GPIO0 || gpio > GPIO7) {
         ++errcnt;
         errstr += QObject::tr("In setGPIODirection(): GPIO pin number must be between 0 and 7.\n");  // Program logic error
         retval = OTHER_ERROR;
@@ -585,7 +596,7 @@ quint8 MCP2210::setGPIODirection(int gpio, bool direction, int &errcnt, QString 
 // Sets the directions of all GPIO pins on the MCP2210
 quint8 MCP2210::setGPIODirections(quint8 directions, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_GPIO_DIRECTIONS, 0x00, 0x00, 0x00,  // Header
         directions, 0x01                        // GPIO directions (GPIO7 to GPIO0)
     };
@@ -596,7 +607,7 @@ quint8 MCP2210::setGPIODirections(quint8 directions, int &errcnt, QString &errst
 // Sets the values of all GPIO pins on the MCP2210
 quint8 MCP2210::setGPIOs(quint16 values, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_GPIO_VALUES, 0x00, 0x00, 0x00,  // Header
         static_cast<quint8>(values)         // GPIO values (GPIO7 to GPPIO0 - GPIO8 is an input only pin)
     };
@@ -639,7 +650,7 @@ QVector<quint8> MCP2210::spiTransfer(const QVector<quint8> &data, quint8 &status
 quint8 MCP2210::toggleGPIO(int gpio, int &errcnt, QString &errstr)
 {
     quint8 retval;
-    if (gpio < 0 || gpio > 7) {
+    if (gpio < GPIO0 || gpio > GPIO7) {
         ++errcnt;
         errstr += QObject::tr("In toggleGPIO(): GPIO pin number must be between 0 and 7.\n");  // Program logic error
         retval = OTHER_ERROR;
@@ -661,10 +672,37 @@ quint8 MCP2210::toggleGPIO(int gpio, int &errcnt, QString &errstr)
     return retval;
 }
 
+// Sends password over to the MCP2210
+// This function should be called before modifying a setting in the NVRAM, if a password is set
+quint8 MCP2210::usePassword(const QString &password, int &errcnt, QString &errstr)
+{
+    quint8 retval;
+    QByteArray passwordLatin1 = password.toLatin1();
+    int passwordLength = passwordLatin1.size();
+    if (passwordLength > static_cast<int>(PASSWORD_MAXLEN)) {
+        ++errcnt;
+        errstr += "In usePassword(): password cannot be longer than 8 characters.\n";  // Program logic error
+        retval = OTHER_ERROR;
+    } else if (password != passwordLatin1) {
+        ++errcnt;
+        errstr += "In usePassword(): password cannot have non-latin characters.\n";  // Program logic error
+        retval = OTHER_ERROR;
+    } else {
+        QVector<quint8> command(passwordLength + 4);
+        command[0] = SEND_PASSWORD;  // Header
+        for (int i = 0; i < passwordLength; ++i) {
+            command[i + 4] = static_cast<quint8>(passwordLatin1[i]);
+        }
+        QVector<quint8> response = hidTransfer(command, errcnt, errstr);
+        retval = response[1];
+    }
+    return retval;
+}
+
 // Writes a byte to a given EEPROM address
 quint8 MCP2210::writeEEPROMByte(quint8 address, quint8 value, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         WRITE_EEPROM,  // Header
         address,       // Address to be written
         value          // Value
@@ -688,6 +726,7 @@ quint8 MCP2210::writeEEPROMRange(quint8 begin, quint8 end, const QVector<quint8>
             errstr += QObject::tr("In writeEEPROMRange(): vector size does not match range size.\n");  // Program logic error
             retval = OTHER_ERROR;
         } else {
+            retval = COMPLETED;  // Fix applied in version 1.1.0
             for (int i = 0; i < vecSize; ++i) {
                 int preverrcnt = errcnt;
                 retval = writeEEPROMByte(static_cast<quint8>(begin + i), values[i], errcnt, errstr);
@@ -714,32 +753,63 @@ quint8 MCP2210::writeManufacturerDesc(const QString &manufacturer, int &errcnt, 
     return retval;
 }
 
-// Writes the given chip transfer settings to the MCP2210 OTP NVRAM
+// Writes the given chip transfer settings to the MCP2210 OTP NVRAM, while also setting the access control mode and password (expanded in version 1.1.0)
+// Note that using an empty string for the password will have the effect of leaving it unchanged
+quint8 MCP2210::writeNVChipSettings(const ChipSettings &settings, quint8 accessControlMode, const QString &password, int &errcnt, QString &errstr)
+{
+    quint8 retval;
+    QByteArray passwordLatin1 = password.toLatin1();
+    int passwordLength = passwordLatin1.size();
+    if (accessControlMode != ACNONE && accessControlMode != ACPASSWORD && accessControlMode != ACLOCKED) {
+        ++errcnt;
+        errstr += "In writeNVChipSettings(): the specified access control mode is not supported.\n";  // Program logic error
+        retval = OTHER_ERROR;
+    } else if (passwordLength > static_cast<int>(PASSWORD_MAXLEN)) {
+        ++errcnt;
+        errstr += "In writeNVChipSettings(): password cannot be longer than 8 characters.\n";  // Program logic error
+        retval = OTHER_ERROR;
+    } else if (password != passwordLatin1) {
+        ++errcnt;
+        errstr += "In writeNVChipSettings(): password cannot have non-latin characters.\n";  // Program logic error
+        retval = OTHER_ERROR;
+    } else {
+        QVector<quint8> command(passwordLength + 19);
+        command[0] = SET_NVRAM_SETTINGS;                                                                                // Header
+        command[1] = NV_CHIP_SETTINGS;
+        command[4] = settings.gp0;                                                                                      // GP0 pin configuration
+        command[5] = settings.gp1;                                                                                      // GP1 pin configuration
+        command[6] = settings.gp2;                                                                                      // GP2 pin configuration
+        command[7] = settings.gp3;                                                                                      // GP3 pin configuration
+        command[8] = settings.gp4;                                                                                      // GP4 pin configuration
+        command[9] = settings.gp5;                                                                                      // GP5 pin configuration
+        command[10] = settings.gp6;                                                                                     // GP6 pin configuration
+        command[11] = settings.gp7;                                                                                     // GP7 pin configuration
+        command[12] = settings.gp8,                                                                                     // GP8 pin configuration
+        command[13] = settings.gpout;                                                                                   // Default GPIO outputs (GPIO7 to GPIO0)
+        command[15] = settings.gpdir;                                                                                   // Default GPIO directions (GPIO7 to GPIO0)
+        command[16] = 0x01;
+        command[17] = static_cast<quint8>(settings.rmwakeup << 4 | (0x07 & settings.intmode) << 1 | settings.nrelspi);  // Other chip settings
+        command[18] = accessControlMode;                                                                                // Access control mode
+        for (int i = 0; i < passwordLength; ++i) {
+            command[i + 19] = static_cast<quint8>(passwordLatin1[i]);
+        }
+        QVector<quint8> response = hidTransfer(command, errcnt, errstr);
+        retval = response[1];
+    }
+    return retval;
+}
+
+// Writes the given chip transfer settings to the MCP2210 OTP NVRAM (this overloaded function is functionally equivalent to the implementation of writeNVChipSettings() that is found in version 1.0.0)
+// The use of this variant of writeNVChipSettings() sets the access control mode to "ACNONE" [0x00], but the password is kept unchanged
 quint8 MCP2210::writeNVChipSettings(const ChipSettings &settings, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
-        SET_NVRAM_SETTINGS, NV_CHIP_SETTINGS, 0x00, 0x00,                                                // Header
-        settings.gp0,                                                                                    // GP0 pin configuration
-        settings.gp1,                                                                                    // GP1 pin configuration
-        settings.gp2,                                                                                    // GP2 pin configuration
-        settings.gp3,                                                                                    // GP3 pin configuration
-        settings.gp4,                                                                                    // GP4 pin configuration
-        settings.gp5,                                                                                    // GP5 pin configuration
-        settings.gp6,                                                                                    // GP6 pin configuration
-        settings.gp7,                                                                                    // GP7 pin configuration
-        settings.gp8,                                                                                    // GP8 pin configuration
-        settings.gpout, 0x00,                                                                            // Default GPIO outputs (GPIO7 to GPIO0)
-        settings.gpdir, 0x01,                                                                            // Default GPIO directions (GPIO7 to GPIO0)
-        static_cast<quint8>(settings.rmwakeup << 4 | (0x07 & settings.intmode) << 1 | settings.nrelspi)  // Other chip settings
-    };
-    QVector<quint8> response = hidTransfer(command, errcnt, errstr);
-    return response[1];
+    return writeNVChipSettings(settings, ACNONE, "", errcnt, errstr);
 }
 
 // Writes the given SPI transfer settings to the MCP2210 OTP NVRAM
 quint8 MCP2210::writeNVSPISettings(const SPISettings &settings, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_NVRAM_SETTINGS, NV_SPI_SETTINGS, 0x00, 0x00,                                           // Header
         static_cast<quint8>(settings.bitrate), static_cast<quint8>(settings.bitrate >> 8),         // Bit rate
         static_cast<quint8>(settings.bitrate >> 16), static_cast<quint8>(settings.bitrate >> 24),
@@ -772,7 +842,7 @@ quint8 MCP2210::writeProductDesc(const QString &product, int &errcnt, QString &e
 // Writes the USB parameters to the MCP2210 OTP NVRAM
 quint8 MCP2210::writeUSBParameters(const USBParameters &parameters, int &errcnt, QString &errstr)
 {
-    QVector<quint8> command = {
+    QVector<quint8> command{
         SET_NVRAM_SETTINGS, USB_PARAMETERS, 0x00, 0x00,                                                      // Header
         static_cast<quint8>(parameters.vid), static_cast<quint8>(parameters.vid >> 8),                       // Vendor ID
         static_cast<quint8>(parameters.pid), static_cast<quint8>(parameters.pid >> 8),                       // Product ID

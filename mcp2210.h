@@ -1,4 +1,4 @@
-/* MCP2210 class for Qt - Version 1.0.0
+/* MCP2210 class for Qt - Version 1.1.0
    Copyright (c) 2022 Samuel Lourenço
 
    This library is free software: you can redistribute it and/or modify it
@@ -48,6 +48,7 @@ public:
     static const int ERROR_BUSY = 3;           // Returned by open() if the device is already in use
     static const size_t COMMAND_SIZE = 64;     // HID command size
     static const size_t SPIDATA_MAXSIZE = 60;  // Maximum size of the data vector for a single SPI transfer (only applicable to basic SPI transfers)
+    static const size_t PASSWORD_MAXLEN = 8;   // Maximum length for the password
 
     // Descriptor specific definitions
     static const size_t DESC_MAXLEN = 28;  // Maximum length for any descriptor
@@ -74,6 +75,7 @@ public:
     static const quint8 WRITE_EEPROM = 0x51;         // Write EEPROM
     static const quint8 SET_NVRAM_SETTINGS = 0x60;   // Set NVRAM settings
     static const quint8 GET_NVRAM_SETTINGS = 0x61;   // Get NVRAM settings
+    static const quint8 SEND_PASSWORD = 0x70;        // Send password
 
     // NVRAM settings sub-command IDs
     static const quint8 NV_SPI_SETTINGS = 0x10;    // Power-up (non-volatile) SPI transfer settings
@@ -98,7 +100,12 @@ public:
     static const quint8 TRANSFER_STARTED = 0x20;       // SPI transfer started (no data to receive)
     static const quint8 TRANSFER_NOT_FINISHED = 0x30;  // SPI transfer not finished (received data available)
 
-    // The following values are applicable to ChipSettings/configureChipSettings()/getChipSettings()
+    // Access control modes, returned by getAccessControlMode()
+    static const quint8 ACNONE = 0x00;      // Chip settings not protected (no access control)
+    static const quint8 ACPASSWORD = 0x40;  // Chip settings protected by password access
+    static const quint8 ACLOCKED = 0x80;    // Chip settings permanently locked
+
+    // The following values are applicable to ChipSettings/configureChipSettings()/getChipSettings()/getNVChipSettings()/writeNVChipSettings()
     static const quint8 PCGPIO = 0x00;   // Pin configured as GPIO
     static const quint8 PCCS = 0x01;     // Pin configured as chip select
     static const quint8 PCFUNC = 0x02;   // Pin configured as a dedicated function pin
@@ -117,60 +124,60 @@ public:
     static const bool PWNO = false;    // Password not guessed
     static const bool PWOK = true;     // Password guessed
 
-    // The following values are applicable to SPISettings/configureSPISettings()/getSPISettings()
-    static const quint32 BRT1K464 = 1464;    // Value corresponding to a bit rate of 1.464Kbps
-    static const quint32 BRT1K5 = 1500;      // Value corresponding to a bit rate of 1.5Kbps
-    static const quint32 BRT1K875 = 1875;    // Value corresponding to a bit rate of 1.875Kbps
-    static const quint32 BRT2K5 = 2500;      // Value corresponding to a bit rate of 2.5Kbps
-    static const quint32 BRT3K = 3000;       // Value corresponding to a bit rate of 3Kbps
-    static const quint32 BRT3K125 = 3125;    // Value corresponding to a bit rate of 3.125Kbps
-    static const quint32 BRT3K75 = 3750;     // Value corresponding to a bit rate of 3.75Kbps
-    static const quint32 BRT5K = 5000;       // Value corresponding to a bit rate of 5Kbps
-    static const quint32 BRT6K = 6000;       // Value corresponding to a bit rate of 6Kbps
-    static const quint32 BRT6K25 = 6250;     // Value corresponding to a bit rate of 6.25Kbps
-    static const quint32 BRT7K5 = 7500;      // Value corresponding to a bit rate of 7.5Kbps
-    static const quint32 BRT9K375 = 9375;    // Value corresponding to a bit rate of 9.375Kbps
-    static const quint32 BRT10K = 10000;     // Value corresponding to a bit rate of 10Kbps
-    static const quint32 BRT12K = 12000;     // Value corresponding to a bit rate of 12Kbps
-    static const quint32 BRT12K5 = 12500;    // Value corresponding to a bit rate of 12.5Kbps
-    static const quint32 BRT15K = 15000;     // Value corresponding to a bit rate of 15Kbps
-    static const quint32 BRT15K625 = 15625;  // Value corresponding to a bit rate of 15.625Kbps
-    static const quint32 BRT18K75 = 18750;   // Value corresponding to a bit rate of 18.750Kbps
-    static const quint32 BRT20K = 20000;     // Value corresponding to a bit rate of 20Kbps
-    static const quint32 BRT24K = 24000;     // Value corresponding to a bit rate of 24Kbps
-    static const quint32 BRT25K = 25000;     // Value corresponding to a bit rate of 25Kbps
-    static const quint32 BRT30K = 30000;     // Value corresponding to a bit rate of 30Kbps
-    static const quint32 BRT31K25 = 31250;   // Value corresponding to a bit rate of 31.25Kbps
-    static const quint32 BRT37K5 = 37500;    // Value corresponding to a bit rate of 37.5Kbps
-    static const quint32 BRT40K = 40000;     // Value corresponding to a bit rate of 40Kbps
-    static const quint32 BRT46K875 = 46875;  // Value corresponding to a bit rate of 46.875Kbps
-    static const quint32 BRT48K = 48000;     // Value corresponding to a bit rate of 48Kbps
-    static const quint32 BRT50K = 50000;     // Value corresponding to a bit rate of 50Kbps
-    static const quint32 BRT60K = 60000;     // Value corresponding to a bit rate of 60Kbps
-    static const quint32 BRT62K5 = 62500;    // Value corresponding to a bit rate of 62.5Kbps
-    static const quint32 BRT75K = 75000;     // Value corresponding to a bit rate of 75Kbps
-    static const quint32 BRT80K = 80000;     // Value corresponding to a bit rate of 80Kbps
-    static const quint32 BRT93K75 = 93750;   // Value corresponding to a bit rate of 93.75Kbps
-    static const quint32 BRT100K = 100000;   // Value corresponding to a bit rate of 100Kbps
-    static const quint32 BRT120K = 120000;   // Value corresponding to a bit rate of 120Kbps
-    static const quint32 BRT125K = 125000;   // Value corresponding to a bit rate of 125Kbps
-    static const quint32 BRT150K = 150000;   // Value corresponding to a bit rate of 150Kbps
-    static const quint32 BRT187K5 = 187500;  // Value corresponding to a bit rate of 187.5Kbps
-    static const quint32 BRT200K = 200000;   // Value corresponding to a bit rate of 200Kbps
-    static const quint32 BRT240K = 240000;   // Value corresponding to a bit rate of 240Kbps
-    static const quint32 BRT250K = 250000;   // Value corresponding to a bit rate of 250Kbps
-    static const quint32 BRT300K = 300000;   // Value corresponding to a bit rate of 300Kbps
-    static const quint32 BRT375K = 375000;   // Value corresponding to a bit rate of 375Kbps
-    static const quint32 BRT400K = 400000;   // Value corresponding to a bit rate of 400Kbps
-    static const quint32 BRT500K = 500000;   // Value corresponding to a bit rate of 500Kbps
-    static const quint32 BRT600K = 600000;   // Value corresponding to a bit rate of 600Kbps
-    static const quint32 BRT750K = 750000;   // Value corresponding to a bit rate of 750Kbps
-    static const quint32 BRT1M = 1000000;    // Value corresponding to a bit rate of 1Mbps
-    static const quint32 BRT1M2 = 1200000;   // Value corresponding to a bit rate of 1.2Mbps
-    static const quint32 BRT1M5 = 1500000;   // Value corresponding to a bit rate of 1.5Mbps
-    static const quint32 BRT2M = 2000000;    // Value corresponding to a bit rate of 2Mbps
-    static const quint32 BRT3M = 3000000;    // Value corresponding to a bit rate of 3Mbps
-    static const quint32 BRT12M = 12000000;  // Value corresponding to a bit rate of 12Mbps
+    // The following values are applicable to SPISettings/configureSPISettings()/getSPISettings()/getNVSPISettings()/writeNVSPISettings()
+    static const quint32 BRT1K464 = 1464;    // Value corresponding to a bit rate of 1.464 Kib/s
+    static const quint32 BRT1K5 = 1500;      // Value corresponding to a bit rate of 1.5 Kib/s
+    static const quint32 BRT1K875 = 1875;    // Value corresponding to a bit rate of 1.875 Kib/s
+    static const quint32 BRT2K5 = 2500;      // Value corresponding to a bit rate of 2.5 Kib/s
+    static const quint32 BRT3K = 3000;       // Value corresponding to a bit rate of 3 Kib/s
+    static const quint32 BRT3K125 = 3125;    // Value corresponding to a bit rate of 3.125 Kib/s
+    static const quint32 BRT3K75 = 3750;     // Value corresponding to a bit rate of 3.75 Kib/s
+    static const quint32 BRT5K = 5000;       // Value corresponding to a bit rate of 5 Kib/s
+    static const quint32 BRT6K = 6000;       // Value corresponding to a bit rate of 6 Kib/s
+    static const quint32 BRT6K25 = 6250;     // Value corresponding to a bit rate of 6.25 Kib/s
+    static const quint32 BRT7K5 = 7500;      // Value corresponding to a bit rate of 7.5 Kib/s
+    static const quint32 BRT9K375 = 9375;    // Value corresponding to a bit rate of 9.375 Kib/s
+    static const quint32 BRT10K = 10000;     // Value corresponding to a bit rate of 10 Kib/s
+    static const quint32 BRT12K = 12000;     // Value corresponding to a bit rate of 12 Kib/s
+    static const quint32 BRT12K5 = 12500;    // Value corresponding to a bit rate of 12.5 Kib/s
+    static const quint32 BRT15K = 15000;     // Value corresponding to a bit rate of 15 Kib/s
+    static const quint32 BRT15K625 = 15625;  // Value corresponding to a bit rate of 15.625 Kib/s
+    static const quint32 BRT18K75 = 18750;   // Value corresponding to a bit rate of 18.750 Kib/s
+    static const quint32 BRT20K = 20000;     // Value corresponding to a bit rate of 20 Kib/s
+    static const quint32 BRT24K = 24000;     // Value corresponding to a bit rate of 24 Kib/s
+    static const quint32 BRT25K = 25000;     // Value corresponding to a bit rate of 25 Kib/s
+    static const quint32 BRT30K = 30000;     // Value corresponding to a bit rate of 30 Kib/s
+    static const quint32 BRT31K25 = 31250;   // Value corresponding to a bit rate of 31.25 Kib/s
+    static const quint32 BRT37K5 = 37500;    // Value corresponding to a bit rate of 37.5 Kib/s
+    static const quint32 BRT40K = 40000;     // Value corresponding to a bit rate of 40 Kib/s
+    static const quint32 BRT46K875 = 46875;  // Value corresponding to a bit rate of 46.875 Kib/s
+    static const quint32 BRT48K = 48000;     // Value corresponding to a bit rate of 48 Kib/s
+    static const quint32 BRT50K = 50000;     // Value corresponding to a bit rate of 50 Kib/s
+    static const quint32 BRT60K = 60000;     // Value corresponding to a bit rate of 60 Kib/s
+    static const quint32 BRT62K5 = 62500;    // Value corresponding to a bit rate of 62.5 Kib/s
+    static const quint32 BRT75K = 75000;     // Value corresponding to a bit rate of 75 Kib/s
+    static const quint32 BRT80K = 80000;     // Value corresponding to a bit rate of 80 Kib/s
+    static const quint32 BRT93K75 = 93750;   // Value corresponding to a bit rate of 93.75 Kib/s
+    static const quint32 BRT100K = 100000;   // Value corresponding to a bit rate of 100 Kib/s
+    static const quint32 BRT120K = 120000;   // Value corresponding to a bit rate of 120 Kib/s
+    static const quint32 BRT125K = 125000;   // Value corresponding to a bit rate of 125 Kib/s
+    static const quint32 BRT150K = 150000;   // Value corresponding to a bit rate of 150 Kib/s
+    static const quint32 BRT187K5 = 187500;  // Value corresponding to a bit rate of 187.5 Kib/s
+    static const quint32 BRT200K = 200000;   // Value corresponding to a bit rate of 200 Kib/s
+    static const quint32 BRT240K = 240000;   // Value corresponding to a bit rate of 240 Kib/s
+    static const quint32 BRT250K = 250000;   // Value corresponding to a bit rate of 250 Kib/s
+    static const quint32 BRT300K = 300000;   // Value corresponding to a bit rate of 300 Kib/s
+    static const quint32 BRT375K = 375000;   // Value corresponding to a bit rate of 375 Kib/s
+    static const quint32 BRT400K = 400000;   // Value corresponding to a bit rate of 400 Kib/s
+    static const quint32 BRT500K = 500000;   // Value corresponding to a bit rate of 500 Kib/s
+    static const quint32 BRT600K = 600000;   // Value corresponding to a bit rate of 600 Kib/s
+    static const quint32 BRT750K = 750000;   // Value corresponding to a bit rate of 750 Kib/s
+    static const quint32 BRT1M = 1000000;    // Value corresponding to a bit rate of 1 Mib/s
+    static const quint32 BRT1M2 = 1200000;   // Value corresponding to a bit rate of 1.2 Mib/s
+    static const quint32 BRT1M5 = 1500000;   // Value corresponding to a bit rate of 1.5 Mib/s
+    static const quint32 BRT2M = 2000000;    // Value corresponding to a bit rate of 2 Mib/s
+    static const quint32 BRT3M = 3000000;    // Value corresponding to a bit rate of 3 Mib/s
+    static const quint32 BRT12M = 12000000;  // Value corresponding to a bit rate of 12 Mib/s
     static const quint8 SPIMODE0 = 0x00;     // Value corresponding to SPI mode 0
     static const quint8 SPIMODE1 = 0x01;     // Value corresponding to SPI mode 1
     static const quint8 SPIMODE2 = 0x02;     // Value corresponding to SPI mode 2
@@ -246,7 +253,7 @@ public:
     struct USBParameters {
         quint16 vid;    // Vendor ID
         quint16 pid;    // Product ID
-        quint8 maxpow;  // Maximum consumption current (raw value un 2mA units)
+        quint8 maxpow;  // Maximum consumption current (raw value in 2 mA units)
         bool powmode;   // Power mode (false for bus-powered, true for self-powered)
         bool rmwakeup;  // Remote wakeup
 
@@ -264,6 +271,7 @@ public:
     void close();
     quint8 configureChipSettings(const ChipSettings &settings, int &errcnt, QString &errstr);
     quint8 configureSPISettings(const SPISettings &settings, int &errcnt, QString &errstr);
+    quint8 getAccessControlMode(int &errcnt, QString &errstr);
     ChipSettings getChipSettings(int &errcnt, QString &errstr);
     ChipStatus getChipStatus(int &errcnt, QString &errstr);
     quint16 getEventCount(int &errcnt, QString &errstr);
@@ -288,9 +296,11 @@ public:
     quint8 setGPIOs(quint16 values, int &errcnt, QString &errstr);
     QVector<quint8> spiTransfer(const QVector<quint8> &data, quint8 &status, int &errcnt, QString &errstr);
     quint8 toggleGPIO(int gpio, int &errcnt, QString &errstr);
+    quint8 usePassword(const QString &password, int &errcnt, QString &errstr);
     quint8 writeEEPROMByte(quint8 address, quint8 value, int &errcnt, QString &errstr);
     quint8 writeEEPROMRange(quint8 begin, quint8 end, const QVector<quint8> &values, int &errcnt, QString &errstr);
     quint8 writeManufacturerDesc(const QString &manufacturer, int &errcnt, QString &errstr);
+    quint8 writeNVChipSettings(const ChipSettings &settings, quint8 accessControlMode, const QString &password, int &errcnt, QString &errstr);
     quint8 writeNVChipSettings(const ChipSettings &settings, int &errcnt, QString &errstr);
     quint8 writeNVSPISettings(const SPISettings &settings, int &errcnt, QString &errstr);
     quint8 writeProductDesc(const QString &product, int &errcnt, QString &errstr);
