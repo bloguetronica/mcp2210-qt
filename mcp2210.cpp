@@ -1,5 +1,5 @@
-/* MCP2210 class for Qt - Version 1.3.0
-   Copyright (c) 2022-2025 Samuel Lourenço
+/* MCP2210 class for Qt - Version 1.3.1
+   Copyright (c) 2022-2026 Samuel Lourenço
 
    This library is free software: you can redistribute it and/or modify it
    under the terms of the GNU Lesser General Public License as published by
@@ -29,6 +29,7 @@ extern "C" {
 // Definitions
 const quint8 EPIN = 0x81;             // Address of endpoint assuming the IN direction
 const quint8 EPOUT = 0x01;            // Address of endpoint assuming the OUT direction
+const int IFACE = 0;                  // Interface number (implemented in version 1.3.1)
 const unsigned int TR_TIMEOUT = 500;  // Transfer timeout in milliseconds
 
 // Private generic function that is used to get any descriptor
@@ -176,9 +177,9 @@ quint8 MCP2210::cancelSPITransfer(int &errcnt, QString &errstr)
 void MCP2210::close()
 {
     if (isOpen()) {  // This condition avoids a segmentation fault if the calling algorithm tries, for some reason, to close the same device twice (e.g., if the device is already closed when the destructor is called)
-        libusb_release_interface(handle_, 0);  // Release the interface
+        libusb_release_interface(handle_, IFACE);  // Release the interface (implemented in version 1.3.1)
         if (kernelWasAttached_) {  // If a kernel driver was attached to the interface before
-            libusb_attach_kernel_driver(handle_, 0);  // Reattach the kernel driver
+            libusb_attach_kernel_driver(handle_, IFACE);  // Reattach the kernel driver (implemented in version 1.3.1)
         }
         libusb_close(handle_);  // Close the device
         libusb_exit(context_);  // Deinitialize libusb
@@ -462,7 +463,7 @@ QVector<quint8> MCP2210::hidTransfer(const QVector<quint8> &data, int &errcnt, Q
 int MCP2210::open(quint16 vid, quint16 pid, const QString &serial)
 {
     int retval;
-    if (isOpen()) {  // Just in case the calling algorithm tries to open a device that was already sucessfully open, or tries to open different devices concurrently, all while using (or referencing to) the same object
+    if (isOpen()) {  // Just in case the calling algorithm tries to open a device that was already successfully open, or tries to open different devices concurrently, all while using (or referencing to) the same object
         retval = SUCCESS;
     } else if (libusb_init(&context_) != 0) {  // Initialize libusb. In case of failure
         retval = ERROR_INIT;
@@ -476,15 +477,15 @@ int MCP2210::open(quint16 vid, quint16 pid, const QString &serial)
             libusb_exit(context_);  // Deinitialize libusb
             retval = ERROR_NOT_FOUND;
         } else {  // If the device is successfully opened and a handle obtained
-            if (libusb_kernel_driver_active(handle_, 0) == 1) {  // If a kernel driver is active on the interface
-                libusb_detach_kernel_driver(handle_, 0);  // Detach the kernel driver
+            if (libusb_kernel_driver_active(handle_, IFACE) == 1) {  // If a kernel driver is active on the interface (implemented in version 1.3.1)
+                libusb_detach_kernel_driver(handle_, IFACE);  // Detach the kernel driver (implemented in version 1.3.1)
                 kernelWasAttached_ = true;  // Flag that the kernel driver was attached
             } else {
                 kernelWasAttached_ = false;  // The kernel driver was not attached
             }
-            if (libusb_claim_interface(handle_, 0) != 0) {  // Claim the interface. In case of failure
+            if (libusb_claim_interface(handle_, IFACE) != 0) {  // Claim the interface. In case of failure (implemented in version 1.3.1)
                 if (kernelWasAttached_) {  // If a kernel driver was attached to the interface before
-                    libusb_attach_kernel_driver(handle_, 0);  // Reattach the kernel driver
+                    libusb_attach_kernel_driver(handle_, IFACE);  // Reattach the kernel driver (modified in version 1.3.1)
                 }
                 libusb_close(handle_);  // Close the device
                 libusb_exit(context_);  // Deinitialize libusb
